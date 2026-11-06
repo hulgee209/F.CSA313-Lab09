@@ -104,3 +104,20 @@ OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"
 Нийт **21 тест** шаардагдсан (`results/mvn-verify-B.txt`: `Tests run: 21, Failures: 0, Errors: 0, Skipped: 0`).
 
 `results/jacoco-B.csv`: `BRANCH_MISSED = 0`, `BRANCH_COVERED = 41`, `LINE_MISSED = 0`, `LINE_COVERED = 25` → **Branch 41/41 = 100%, Line 25/25 = 100%**.
+
+---
+
+## Хэсэг C: Давталтын заагийн тестүүд
+
+`gpa()` доторх `for (double s : scores)` давталтад Лекц 9-ийн 0 / 1 / 2+ дүрмийг хэрэгжүүлсэн:
+
+| Давталт | Тест | Оролт | Хүлээгдэх үр дүн |
+|---|---|---|---|
+| 0 удаа | `gpaLoop_zeroIterations_emptyArray_throws` | `new double[0]` | `assertThrows(IllegalArgumentException)` |
+| 0 удаа | `gpaLoop_zeroIterations_nullInput_throws` | `null` | `assertThrows(IllegalArgumentException)` |
+| 1 удаа | `gpaLoop_oneIteration_singleScore_is4` | `[95]` | `4.0` |
+| 2+ удаа | `gpaLoop_manyIterations_fourScores_is2_5` | `[95, 85, 75, 65]` | `2.5` |
+
+Эдгээр тестийг нэмсний дараа нийт 25 тест болсон боловч хамралт өөрчлөгдөөгүй: Branch 41/41, Line 25/25 хэвээр.
+
+**Хамралт өсгөдөггүй ч яагаад хэрэгтэй вэ?** Branch хамралт нь давталтын салаа (дахин орох/гарах) дор хаяж нэг удаа явсныг л тоолдог. Харин давталт 0, 1, олон удаа эргэхэд гарах үр дүн, жишээ нь хоосон массивын үед 0-д хуваах эсвэл нэг элементийн үед голч буруу тооцоолох, зөв эсэхийг огт шалгадаггүй. Ийм "off-by-one" ба хуримтлуулагчийн алдаа давталтын зааг дээр л илэрдэг тул эдгээр тест нь хамралтын тоонд нөлөөлөхгүй ч зан төлөвийг баталгаажуулна.
