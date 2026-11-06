@@ -121,3 +121,20 @@ OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"
 Эдгээр тестийг нэмсний дараа нийт 25 тест болсон боловч хамралт өөрчлөгдөөгүй: Branch 41/41, Line 25/25 хэвээр.
 
 **Хамралт өсгөдөггүй ч яагаад хэрэгтэй вэ?** Branch хамралт нь давталтын салаа (дахин орох/гарах) дор хаяж нэг удаа явсныг л тоолдог. Харин давталт 0, 1, олон удаа эргэхэд гарах үр дүн, жишээ нь хоосон массивын үед 0-д хуваах эсвэл нэг элементийн үед голч буруу тооцоолох, зөв эсэхийг огт шалгадаггүй. Ийм "off-by-one" ба хуримтлуулагчийн алдаа давталтын зааг дээр л илэрдэг тул эдгээр тест нь хамралтын тоонд нөлөөлөхгүй ч зан төлөвийг баталгаажуулна.
+
+---
+
+## Хэсэг D: Хамралт 100% — гэхдээ алдаа амьд
+
+`letterGrade()`-д спецификацийн зааг утгын 7 тест нэмсэн: `letterGrade_boundary_60_isD`, `letterGrade_boundary_59_99_isF`, `letterGrade_boundary_69_99_isD`, `letterGrade_boundary_0_isF`, `letterGrade_boundary_100_isA`, `letterGrade_boundary_89_99_isB`, `letterGrade_boundary_90_isA`.
+
+`mvn test` (`results/mvn-test-D-fail.txt`): `Tests run: 32, Failures: 1, Errors: 0, Skipped: 0` → `BUILD FAILURE`.
+
+Унасан тест ба алдааны мөр:
+
+```
+[ERROR] mn.edu.must.sqat.ScholarshipCalculatorTest.letterGrade_boundary_60_isD -- Time elapsed: 0.028 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <D> but was: <F>
+```
+
+**Алдааны шалтгаан.** Харьцуулах операторуудыг спецификацитай мөр мөрөөр нь тулгахад `if (score > 60) return "D";` гэж бичсэн байна. Харин спецификацид "60-69.99 → D" гэж заасан тул зөв нь `score >= 60`. Одоогийн кодоор яг 60 оноо "F" болж байна.
