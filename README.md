@@ -40,3 +40,67 @@ OS name: "windows 11", version: "10.0", arch: "amd64", family: "windows"
 **Шар/улаан мөрүүдийн ажиглалт.** Шар ромботой мөрүүд нь бүх `if`-ийн хамгаалалтын нөхцөлүүд (`score < 0 || score > 100`, `scores == null || scores.length == 0`, `gpa < 0 || gpa > 4 || credits < 0`) — тэдгээрийн зөвхөн "худал" салаа явсан; мөн `score >= 80`, `hasViolation`, `gpa >= 3.8 && credits >= 15`, `gpa >= 3.4 && credits >= 12` нөхцөлүүдийн нэг тал, `switch`-ийн 5 салаанаас зөвхөн A, B хоёр нь хамрагдсан.
 Улаан (огт хүрээгүй) мөрүүд нь гурван `throw new IllegalArgumentException` буюу алдааны замууд, мөн доод дүн/тэтгэлгийн салаанууд: `return "C"`, `return "D"`, `return "F"`, `case "C"`, `case "D"`, `return 50`, сүүлийн `return 0`.
 Өөрөөр хэлбэл happy-path тестүүд зөвхөн "сайн оюутан"-ы замыг шалгаж, буруу оролт ба бага дүнгийн бүх логикийг огт ажиллуулаагүй байна.
+
+---
+
+## Хэсэг B: CFG зурж branch 100% хүрэх
+
+### `scholarship()`-ийн CFG
+
+![scholarship() CFG](cfg.png)
+
+Зангилаанууд (нөхцөл бүрийг тусдаа шийдвэрийн зангилаа болгосон, учир нь JaCoCo `||`/`&&`-ийн нөхцөл бүрийг тусдаа салаа гэж тоолдог):
+
+| Зангилаа | Код |
+|---|---|
+| N1 | `gpa < 0` |
+| N2 | `gpa > 4` |
+| N3 | `credits < 0` |
+| N4 | `throw new IllegalArgumentException` |
+| N5 | `hasViolation` |
+| N6 | `return 0` (зөрчил) |
+| N7 | `gpa >= 3.8` |
+| N8 | `credits >= 15` |
+| N9 | `return 100` |
+| N10 | `gpa >= 3.4` |
+| N11 | `credits >= 12` |
+| N12 | `return 70` |
+| N13 | `gpa >= 3.0` |
+| N14 | `return 50` |
+| N15 | `return 0` |
+| EXIT | функцээс гарах |
+
+Ирмэгүүд ба тэдгээрийг дайрч буй тест (тест файл дахь метод нэр):
+
+| Ирмэг | Тест |
+|---|---|
+| N1 —T→ N4 | `scholarship_negativeGpa_throws` |
+| N1 —F→ N2 | `scholarship_full_100` (бусад бүх хэвийн тест) |
+| N2 —T→ N4 | `scholarship_gpaAbove4_throws` |
+| N2 —F→ N3 | `scholarship_full_100` |
+| N3 —T→ N4 | `scholarship_negativeCredits_throws` |
+| N3 —F→ N5 | `scholarship_full_100` |
+| N5 —T→ N6 | `scholarship_violation_0` |
+| N5 —F→ N7 | `scholarship_full_100` |
+| N7 —T→ N8 | `scholarship_full_100`, `scholarship_highGpaFewCredits_70` |
+| N7 —F→ N10 | `scholarship_partial_70` |
+| N8 —T→ N9 | `scholarship_full_100` |
+| N8 —F→ N10 | `scholarship_highGpaFewCredits_70` |
+| N10 —T→ N11 | `scholarship_partial_70`, `scholarship_goodGpaFewCredits_50` |
+| N10 —F→ N13 | `scholarship_gpa3_2_50` |
+| N11 —T→ N12 | `scholarship_partial_70` |
+| N11 —F→ N13 | `scholarship_goodGpaFewCredits_50` |
+| N13 —T→ N14 | `scholarship_gpa3_2_50` |
+| N13 —F→ N15 | `scholarship_lowGpa_0` |
+
+Хэсэг A-гийн дараа хамрагдаагүй байсан ирмэгүүд (N1/N2/N3 —T→, N5 —T→, N8 —F→, N10 —F→, N11 —F→, N13 —T/F→) нь шинэ тестийн жагсаалт болсон.
+
+### Нэмсэн тестүүд ба үр дүн
+
+- `letterGrade`: `letterGrade_negative_throws`, `letterGrade_above100_throws` (`||`-ийн нөхцөл тус бүрийн үнэн утга), `letterGrade_75_isC`, `letterGrade_65_isD`, `letterGrade_50_isF`.
+- `gpa`: `gpa_null_throws`, `gpa_empty_throws`, `gpa_allGrades_isTwo` (switch-ийн C, D болон **default** (F) салаа).
+- `scholarship`: дээрх хүснэгтийн 8 шинэ тест. Эхний `if`-ийн гурван нөхцөл тус бүрд тусдаа `assertThrows` тест бичсэн.
+
+Нийт **21 тест** шаардагдсан (`results/mvn-verify-B.txt`: `Tests run: 21, Failures: 0, Errors: 0, Skipped: 0`).
+
+`results/jacoco-B.csv`: `BRANCH_MISSED = 0`, `BRANCH_COVERED = 41`, `LINE_MISSED = 0`, `LINE_COVERED = 25` → **Branch 41/41 = 100%, Line 25/25 = 100%**.

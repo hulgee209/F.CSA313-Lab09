@@ -34,4 +34,94 @@ class ScholarshipCalculatorTest {
     void scholarship_partial_70() {
         assertEquals(70, calc.scholarship(3.5, 12, false));
     }
+
+    // ===== Part B: branch 100% =====
+
+    // --- letterGrade ---
+    @Test
+    void letterGrade_negative_throws() {
+        assertThrows(IllegalArgumentException.class, () -> calc.letterGrade(-1));
+    }
+
+    @Test
+    void letterGrade_above100_throws() {
+        assertThrows(IllegalArgumentException.class, () -> calc.letterGrade(101));
+    }
+
+    @Test
+    void letterGrade_75_isC() {
+        assertEquals("C", calc.letterGrade(75));
+    }
+
+    @Test
+    void letterGrade_65_isD() {
+        assertEquals("D", calc.letterGrade(65));
+    }
+
+    @Test
+    void letterGrade_50_isF() {
+        assertEquals("F", calc.letterGrade(50));
+    }
+
+    // --- gpa ---
+    @Test
+    void gpa_null_throws() {
+        assertThrows(IllegalArgumentException.class, () -> calc.gpa(null));
+    }
+
+    @Test
+    void gpa_empty_throws() {
+        assertThrows(IllegalArgumentException.class, () -> calc.gpa(new double[]{}));
+    }
+
+    @Test
+    void gpa_allGrades_isTwo() {
+        // A=4, B=3, C=2, D=1, F=0 (switch default) -> 10/5 = 2.0
+        assertEquals(2.0, calc.gpa(new double[]{95, 85, 75, 65, 50}), 1e-9);
+    }
+
+    // --- scholarship ---
+    @Test
+    void scholarship_negativeGpa_throws() {
+        assertThrows(IllegalArgumentException.class, () -> calc.scholarship(-0.1, 15, false));
+    }
+
+    @Test
+    void scholarship_gpaAbove4_throws() {
+        assertThrows(IllegalArgumentException.class, () -> calc.scholarship(4.1, 15, false));
+    }
+
+    @Test
+    void scholarship_negativeCredits_throws() {
+        assertThrows(IllegalArgumentException.class, () -> calc.scholarship(3.5, -1, false));
+    }
+
+    @Test
+    void scholarship_violation_0() {
+        assertEquals(0, calc.scholarship(3.9, 16, true));
+    }
+
+    @Test
+    void scholarship_highGpaFewCredits_70() {
+        // gpa >= 3.8 true, credits >= 15 false -> falls to 70 rule
+        assertEquals(70, calc.scholarship(3.9, 14, false));
+    }
+
+    @Test
+    void scholarship_goodGpaFewCredits_50() {
+        // gpa >= 3.4 true, credits >= 12 false -> falls to 50 rule
+        assertEquals(50, calc.scholarship(3.5, 10, false));
+    }
+
+    @Test
+    void scholarship_gpa3_2_50() {
+        // gpa >= 3.4 false, gpa >= 3.0 true
+        assertEquals(50, calc.scholarship(3.2, 16, false));
+    }
+
+    @Test
+    void scholarship_lowGpa_0() {
+        // gpa >= 3.0 false
+        assertEquals(0, calc.scholarship(2.5, 16, false));
+    }
 }
